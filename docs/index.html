@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>Leduc vs CFR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #e9ede8;
+  --surface: #ffffff;
+  --felt: #d9e4dc;
+  --ink: #111a15;
+  --muted: #56635b;
+  --line: #cdd6cf;
+  --accent: #0d6b4c;
+  --accent-ink: #ffffff;
+  --suit-red: #c0303b;
+  --chip: #b7801c;
+  --win: #0d6b4c;
+  --lose: #b3313a;
+  --card-back-a: #0d6b4c;
+  --card-back-b: #12805c;
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1310; --surface: #151d19; --felt: #19251f; --ink: #e6ece8; --muted: #98a59d;
+    --line: #2a3631; --accent: #3dbb88; --accent-ink: #06130d; --suit-red: #f0626b;
+    --chip: #e0ae48; --win: #3dbb88; --lose: #f0626b; --card-back-a: #1d6e52; --card-back-b: #24845f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1310; --surface: #151d19; --felt: #19251f; --ink: #e6ece8; --muted: #98a59d;
+  --line: #2a3631; --accent: #3dbb88; --accent-ink: #06130d; --suit-red: #f0626b;
+  --chip: #e0ae48; --win: #3dbb88; --lose: #f0626b; --card-back-a: #1d6e52; --card-back-b: #24845f;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 24px; }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(2.4rem, 6vw, 3.6rem); line-height: 0.95; margin: 0; letter-spacing: 0.01em; text-transform: uppercase; text-wrap: balance; }
+.sub { color: var(--muted); max-width: 60ch; margin: 6px 0 0; }
+.toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); cursor: pointer; user-select: none; }
+.toggle input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .main { grid-template-columns: minmax(0, 1fr); } }
+
+.table { background: var(--felt); border-radius: 18px; padding: 22px; display: grid; gap: 18px; border: 1px solid var(--line); }
+.seat { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.seat-info { display: grid; gap: 2px; min-width: 0; }
+.seat-name { font-family: var(--display); font-weight: 600; font-size: 1.35rem; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1; }
+.seat-meta { color: var(--muted); font-size: 13px; }
+.put { font-family: var(--mono); font-size: 13px; color: var(--ink); display: inline-flex; align-items: center; gap: 6px; }
+.chip { width: 12px; height: 12px; border-radius: 50%; background: var(--chip); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--chip) 60%, #fff 40%); display: inline-block; }
+
+.middle { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 14px 0; border-block: 1px dashed var(--line); }
+.board { display: flex; align-items: center; gap: 14px; }
+.label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.pot { text-align: right; }
+.pot-num { font-family: var(--display); font-weight: 800; font-size: 2.2rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.round-tag { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+.card { width: 64px; height: 90px; border-radius: 9px; background: var(--surface); border: 1px solid var(--line); display: grid; place-items: center; position: relative; box-shadow: 0 1px 0 var(--line), 0 6px 14px -8px rgba(0,0,0,.35); flex: none; }
+.card .rank { font-family: var(--display); font-weight: 800; font-size: 2.4rem; line-height: 1; }
+.card .suit { position: absolute; top: 6px; left: 8px; font-size: 14px; line-height: 1; }
+.card .suit.b { top: auto; left: auto; bottom: 6px; right: 8px; }
+.card.red { color: var(--suit-red); }
+.card.back { background: repeating-linear-gradient(45deg, var(--card-back-a) 0 6px, var(--card-back-b) 6px 12px); border-color: var(--card-back-a); }
+.card.empty { background: transparent; border: 1.5px dashed var(--line); box-shadow: none; color: var(--muted); }
+.card.empty::after { content: "?"; font-family: var(--display); font-size: 1.6rem; opacity: .5; }
+.card.flip { animation: flip .35s ease-out; }
+@keyframes flip { from { transform: rotateY(90deg); } to { transform: rotateY(0); } }
+
+.status { min-height: 1.5em; font-weight: 500; }
+.status.win { color: var(--win); } .status.lose { color: var(--lose); }
+.actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.actions button, .next { font: 600 15px/1.2 var(--body); padding: 12px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; display: grid; gap: 6px; text-align: left; min-width: 0; }
+.actions button:hover:not(:disabled) { border-color: var(--accent); }
+.actions button:disabled { opacity: .35; cursor: not-allowed; }
+.actions button:focus-visible, .next:focus-visible, .toggle input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions .cost { font: 400 12px var(--mono); color: var(--muted); }
+.hint { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.hint > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .25s; }
+.hint-pct { font: 500 12px var(--mono); color: var(--accent); }
+.next { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); text-align: center; display: block; width: 100%; }
+
+aside { display: grid; gap: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.panel h2 { font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 1.15rem; margin: 0; line-height: 1.1; }
+.spot { font: 500 13px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.dist { display: grid; gap: 8px; }
+.dist-row { display: grid; grid-template-columns: 54px minmax(0, 1fr) 52px; gap: 10px; align-items: center; font-size: 13px; }
+.dist-row .bar { height: 10px; background: color-mix(in srgb, var(--line) 60%, transparent); border-radius: 5px; overflow: hidden; }
+.dist-row .bar > i { display: block; height: 100%; background: var(--muted); border-radius: 5px; }
+.dist-row.picked .bar > i { background: var(--accent); }
+.dist-row.picked span:first-child { font-weight: 600; }
+.dist-row .p { font-family: var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.empty-note { color: var(--muted); font-size: 14px; margin: 0; }
+
+.ledger { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.ledger div { display: grid; gap: 2px; }
+.ledger b { font-family: var(--display); font-weight: 800; font-size: 1.7rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.ledger b.pos { color: var(--win); } .ledger b.neg { color: var(--lose); }
+.ledger-note { font-size: 13px; color: var(--muted); margin: 0; }
+.reset { font: 500 13px var(--body); background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 0; justify-self: start; }
+
+.log { font: 13px/1.6 var(--mono); color: var(--muted); max-height: 200px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.log li.you { color: var(--ink); }
+.rules { color: var(--muted); font-size: 14px; max-width: 75ch; }
+.rules summary { cursor: pointer; color: var(--ink); font-weight: 600; }
+.rules p { margin: 8px 0 0; }
+@media (prefers-reduced-motion: reduce) { .card.flip { animation: none; } .hint > i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Leduc vs CFR</h1>
+      <p class="sub">Heads up Leduc hold'em against a bot trained with CFR+ for 10,000 iterations. A perfect opponent could win at most about 5 millionths of a chip per hand from it.</p>
+    </div>
+    <label class="toggle"><input type="checkbox" id="hint-toggle"> Show the equilibrium play for my spot</label>
+  </header>
+
+  <div class="main">
+    <section class="table" aria-label="Poker table">
+      <div class="seat">
+        <div class="card back" id="bot-card" aria-label="Bot's card, face down"></div>
+        <div class="seat-info">
+          <span class="seat-name">Bot</span>
+          <span class="seat-meta" id="bot-seat">seat</span>
+          <span class="put"><i class="chip"></i><span id="bot-put">1</span> in the pot</span>
+        </div>
+      </div>
+
+      <div class="middle">
+        <div class="board">
+          <div class="card empty" id="board-card" aria-label="Board card"></div>
+          <div><div class="label">Board</div><div class="round-tag" id="round-tag">Round 1, bets of 2</div></div>
+        </div>
+        <div class="pot"><div class="label">Pot</div><div class="pot-num" id="pot">2</div></div>
+      </div>
+
+      <div class="seat">
+        <div class="card" id="your-card" aria-label="Your card"></div>
+        <div class="seat-info">
+          <span class="seat-name">You</span>
+          <span class="seat-meta" id="your-seat">seat</span>
+          <span class="put"><i class="chip"></i><span id="your-put">1</span> in the pot</span>
+        </div>
+      </div>
+
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+      <div class="actions" id="actions">
+        <button id="act-0" data-a="0"><span class="name">Fold</span><span class="cost"></span><span class="hint" hidden><i></i></span><span class="hint-pct" hidden></span></button>
+        <button id="act-1" data-a="1"><span class="name">Check</span><span class="cost"></span><span class="hint" hidden><i></i></span><span class="hint-pct" hidden></span></button>
+        <button id="act-2" data-a="2"><span class="name">Bet</span><span class="cost"></span><span class="hint" hidden><i></i></span><span class="hint-pct" hidden></span></button>
+      </div>
+      <button class="next" id="next" hidden>Deal next hand</button>
+    </section>
+
+    <aside>
+      <div class="panel">
+        <h2>Solver readout</h2>
+        <div class="spot" id="spot">Waiting for the bot's first decision</div>
+        <div class="dist" id="dist"><p class="empty-note">Each time the bot acts you'll see the mix it was choosing from. It mixes its actions deliberately, so the same spot can go different ways.</p></div>
+      </div>
+      <div class="panel">
+        <h2>Session</h2>
+        <div class="ledger">
+          <div><span class="label">Hands</span><b id="hands">0</b></div>
+          <div><span class="label">Net chips</span><b id="net">0</b></div>
+          <div><span class="label">Per hand</span><b id="per">0.00</b></div>
+        </div>
+        <p class="ledger-note" id="ledger-note">Against this bot, perfect play from both sides averages out to 0 per hand once you've played both seats equally. Swings of several chips over a few dozen hands are normal.</p>
+        <button class="reset" id="reset">Reset session</button>
+      </div>
+      <div class="panel">
+        <h2>Hand log</h2>
+        <ul class="log" id="log"></ul>
+      </div>
+    </aside>
+  </div>
+
+  <details class="rules">
+    <summary>Rules of Leduc hold'em</summary>
+    <p>Six cards: two each of J, Q and K. Both players ante 1 and get one private card. In round one bets and raises are 2. Then one board card is dealt and round two bets and raises are 4. Each round allows a bet plus one raise. At showdown, matching the board makes a pair and wins. Otherwise the higher card wins and equal cards split the pot. Seats swap every hand and seat 1 acts first in both rounds.</p>
+  </details>
+</div>
+
+<script>
+const STRATEGY = {"J:/":{"c":0.9276,"r":0.0724},"Q:/":{"c":0.2581,"r":0.7419},"K:/":{"c":0.248,"r":0.752},"J:c/":{"c":0.7009,"r":0.2991},"J:r/":{"f":0.8191,"c":0.1258,"r":0.0551},"Q:c/":{"c":0.1502,"r":0.8498},"Q:r/":{"f":0.0,"c":0.6291,"r":0.3709},"K:c/":{"c":0.0,"r":1.0},"K:r/":{"f":0.0,"c":0.4169,"r":0.5831},"J:cr/":{"f":0.9461,"c":0.0355,"r":0.0183},"J:rr/":{"f":0.0,"c":1.0},"Q:cr/":{"f":0.0,"c":0.8461,"r":0.1539},"Q:rr/":{"f":0.0,"c":1.0},"K:cr/":{"f":0.0,"c":0.3199,"r":0.6801},"K:rr/":{"f":0.0,"c":1.0},"JQ:cc/":{"c":0.8057,"r":0.1943},"JK:cc/":{"c":0.9244,"r":0.0756},"J:crr/":{"f":0.0,"c":1.0},"JQ:rc/":{"c":0.0,"r":1.0},"JK:rc/":{"c":0.0,"r":1.0},"JJ:cc/":{"c":0.9078,"r":0.0922},"Q:crr/":{"f":0.0,"c":1.0},"JJ:rc/":{"c":0.0,"r":1.0},"K:crr/":{"f":0.0,"c":1.0},"QJ:cc/":{"c":1.0,"r":0.0},"QQ:cc/":{"c":0.4763,"r":0.5237},"QK:cc/":{"c":0.4153,"r":0.5847},"QJ:rc/":{"c":0.9927,"r":0.0073},"QQ:rc/":{"c":0.5123,"r":0.4877},"QK:rc/":{"c":0.5619,"r":0.4381},"KJ:cc/":{"c":1.0,"r":0.0},"KQ:cc/":{"c":1.0,"r":0.0},"KK:cc/":{"c":0.0,"r":1.0},"KJ:rc/":{"c":0.9199,"r":0.0801},"KQ:rc/":{"c":1.0,"r":0.0},"KK:rc/":{"c":0.1947,"r":0.8053},"JQ:cc/c":{"c":0.9286,"r":0.0714},"JQ:cc/r":{"f":0.9643,"c":0.0,"r":0.0357},"JK:cc/c":{"c":0.9926,"r":0.0074},"JK:cc/r":{"f":1.0,"c":0.0,"r":0.0},"JQ:crc/":{"c":0.0067,"r":0.9933},"JK:crc/":{"c":0.9663,"r":0.0337},"JQ:rc/c":{"c":0.0,"r":1.0},"JQ:rc/r":{"f":1.0,"c":0.0,"r":0.0},"JK:rc/c":{"c":0.6212,"r":0.3788},"JK:rc/r":{"f":0.6318,"c":0.0,"r":0.3682},"JQ:rrc/":{"c":0.8768,"r":0.1232},"JK:rrc/":{"c":0.4394,"r":0.5606},"QJ:cc/c":{"c":1.0,"r":0.0},"QJ:cc/r":{"f":1.0,"c":0.0,"r":0.0},"QQ:cc/c":{"c":0.0,"r":1.0},"QQ:cc/r":{"f":0.0,"c":0.0843,"r":0.9157},"QK:cc/c":{"c":0.6854,"r":0.3146},"QK:cc/r":{"f":0.2749,"c":0.7251,"r":0.0},"JJ:crc/":{"c":0.002,"r":0.998},"QJ:rc/c":{"c":1.0,"r":0.0},"QJ:rc/r":{"f":0.9809,"c":0.0,"r":0.0191},"QQ:rc/c":{"c":0.0,"r":1.0},"QQ:rc/r":{"f":0.0,"c":0.2221,"r":0.7779},"QK:rc/c":{"c":0.6214,"r":0.3786},"QK:rc/r":{"f":0.6929,"c":0.3071,"r":0.0},"JJ:rrc/":{"c":0.0,"r":1.0},"KJ:cc/c":{"c":0.989,"r":0.011},"KJ:cc/r":{"f":0.9369,"c":0.058,"r":0.0051},"KQ:cc/c":{"c":0.9886,"r":0.0114},"KQ:cc/r":{"f":0.1689,"c":0.79,"r":0.041},"KK:cc/c":{"c":0.0039,"r":0.9961},"KK:cc/r":{"f":0.013,"c":0.0413,"r":0.9457},"KJ:rc/c":{"c":0.5613,"r":0.4387},"KJ:rc/r":{"f":0.2484,"c":0.7276,"r":0.024},"KQ:rc/c":{"c":1.0,"r":0.0},"KQ:rc/r":{"f":0.6982,"c":0.3018,"r":0.0},"KK:rc/c":{"c":0.0,"r":1.0},"KK:rc/r":{"f":0.0,"c":0.0,"r":1.0},"JJ:cc/c":{"c":0.0,"r":1.0},"JJ:cc/r":{"f":0.0,"c":0.3481,"r":0.6519},"QJ:crc/":{"c":0.9699,"r":0.0301},"QQ:crc/":{"c":0.0092,"r":0.9908},"QK:crc/":{"c":0.9891,"r":0.0109},"JJ:rc/c":{"c":0.0,"r":1.0},"JJ:rc/r":{"f":0.0,"c":0.0,"r":1.0},"QJ:rrc/":{"c":1.0,"r":0.0},"QQ:rrc/":{"c":0.0,"r":1.0},"QK:rrc/":{"c":0.8724,"r":0.1276},"KJ:crc/":{"c":1.0,"r":0.0},"KQ:crc/":{"c":0.1156,"r":0.8844},"KK:crc/":{"c":0.9076,"r":0.0924},"KJ:rrc/":{"c":0.923,"r":0.077},"KQ:rrc/":{"c":0.2771,"r":0.7229},"KK:rrc/":{"c":0.465,"r":0.535},"JQ:cc/cr":{"f":1.0,"c":0.0,"r":0.0},"JQ:cc/rr":{"f":1.0,"c":0.0},"JK:cc/cr":{"f":1.0,"c":0.0,"r":0.0},"JK:cc/rr":{"f":1.0,"c":0.0},"JQ:crc/c":{"c":0.6167,"r":0.3833},"JQ:crc/r":{"f":0.8633,"c":0.0,"r":0.1367},"JK:crc/c":{"c":0.4409,"r":0.5591},"JK:crc/r":{"f":0.987,"c":0.0,"r":0.013},"JQ:crrc/":{"c":1.0,"r":0.0},"JK:crrc/":{"c":0.0,"r":1.0},"JQ:rc/cr":{"f":0.9069,"c":0.002,"r":0.0911},"JQ:rc/rr":{"f":1.0,"c":0.0},"JK:rc/cr":{"f":0.1958,"c":0.0057,"r":0.7985},"JK:rc/rr":{"f":1.0,"c":0.0},"JQ:rrc/c":{"c":1.0,"r":0.0},"JQ:rrc/r":{"f":0.5735,"c":0.0,"r":0.4265},"JK:rrc/c":{"c":0.0,"r":1.0},"JK:rrc/r":{"f":0.6881,"c":0.0,"r":0.312},"JJ:cc/cr":{"f":0.0,"c":0.2053,"r":0.7947},"JJ:cc/rr":{"f":0.0,"c":1.0},"QJ:crc/c":{"c":0.4587,"r":0.5413},"QJ:crc/r":{"f":1.0,"c":0.0,"r":0.0},"QQ:crc/c":{"c":0.0,"r":1.0},"QQ:crc/r":{"f":0.0,"c":0.0,"r":1.0},"QK:crc/c":{"c":0.7429,"r":0.2571},"QK:crc/r":{"f":0.5553,"c":0.4447,"r":0.0},"JJ:crrc/":{"c":0.0,"r":1.0},"JJ:rc/cr":{"f":0.001,"c":0.001,"r":0.998},"JJ:rc/rr":{"f":0.0,"c":1.0},"QJ:rrc/c":{"c":1.0,"r":0.0},"QJ:rrc/r":{"f":1.0,"c":0.0,"r":0.0},"QQ:rrc/c":{"c":0.0,"r":1.0},"QQ:rrc/r":{"f":0.0,"c":0.0,"r":1.0},"QK:rrc/c":{"c":0.5746,"r":0.4254},"QK:rrc/r":{"f":0.4974,"c":0.5026,"r":0.0},"KJ:crc/c":{"c":0.862,"r":0.138},"KJ:crc/r":{"f":0.2634,"c":0.7366,"r":0.0},"KQ:crc/c":{"c":0.6314,"r":0.3686},"KQ:crc/r":{"f":0.5784,"c":0.4216,"r":0.0},"KK:crc/c":{"c":0.0,"r":1.0},"KK:crc/r":{"f":0.0,"c":0.0,"r":1.0},"KJ:rrc/c":{"c":0.5808,"r":0.4192},"KJ:rrc/r":{"f":0.0756,"c":0.8824,"r":0.042},"KQ:rrc/c":{"c":0.4775,"r":0.5225},"KQ:rrc/r":{"f":0.3799,"c":0.5345,"r":0.0856},"KK:rrc/c":{"c":0.0,"r":1.0},"KK:rrc/r":{"f":0.0,"c":0.3009,"r":0.6991},"QJ:cc/cr":{"f":1.0,"c":0.0,"r":0.0},"QJ:cc/rr":{"f":0.9875,"c":0.0125},"QQ:cc/cr":{"f":0.0,"c":0.2,"r":0.8},"QQ:cc/rr":{"f":0.0,"c":1.0},"QK:cc/cr":{"f":0.0,"c":0.6511,"r":0.3489},"QK:cc/rr":{"f":0.0923,"c":0.9077},"JJ:crc/c":{"c":0.0,"r":1.0},"JJ:crc/r":{"f":0.0,"c":0.0,"r":1.0},"QJ:crrc/":{"c":0.9949,"r":0.0051},"QQ:crrc/":{"c":1.0,"r":0.0},"QK:crrc/":{"c":0.0,"r":1.0},"QJ:rc/cr":{"f":1.0,"c":0.0,"r":0.0},"QJ:rc/rr":{"f":1.0,"c":0.0},"QQ:rc/cr":{"f":0.0,"c":0.0,"r":1.0},"QQ:rc/rr":{"f":0.0,"c":1.0},"QK:rc/cr":{"f":0.4702,"c":0.5289,"r":0.0008},"QK:rc/rr":{"f":0.7966,"c":0.2034},"JJ:rrc/c":{"c":0.0,"r":1.0},"JJ:rrc/r":{"f":0.0,"c":0.0,"r":1.0},"KJ:cc/cr":{"f":1.0,"c":0.0,"r":0.0},"KJ:cc/rr":{"f":0.5372,"c":0.4628},"KQ:cc/cr":{"f":0.5808,"c":0.4192,"r":0.0},"KQ:cc/rr":{"f":0.5962,"c":0.4038},"KK:cc/cr":{"f":0.004,"c":0.004,"r":0.9919},"KK:cc/rr":{"f":0.0,"c":1.0},"KJ:crrc/":{"c":0.9261,"r":0.0739},"KQ:crrc/":{"c":1.0,"r":0.0},"KK:crrc/":{"c":0.0,"r":1.0},"KJ:rc/cr":{"f":0.0,"c":1.0,"r":0.0},"KJ:rc/rr":{"f":0.6862,"c":0.3138},"KQ:rc/cr":{"f":0.5125,"c":0.4875,"r":0.0},"KQ:rc/rr":{"f":0.495,"c":0.505},"KK:rc/cr":{"f":0.0,"c":0.0,"r":1.0},"KK:rc/rr":{"f":0.0,"c":1.0},"JQ:cc/crr":{"f":1.0,"c":0.0},"JK:cc/crr":{"f":1.0,"c":0.0},"JQ:crc/cr":{"f":0.0018,"c":0.0,"r":0.9982},"JQ:crc/rr":{"f":1.0,"c":0.0},"JK:crc/cr":{"f":1.0,"c":0.0,"r":0.0},"JK:crc/rr":{"f":1.0,"c":0.0},"JQ:crrc/c":{"c":0.9656,"r":0.0344},"JQ:crrc/r":{"f":0.8866,"c":0.0,"r":0.1134},"JK:crrc/c":{"c":0.4818,"r":0.5182},"JK:crrc/r":{"f":0.7854,"c":0.0,"r":0.2146},"JQ:rc/crr":{"f":1.0,"c":0.0},"JK:rc/crr":{"f":1.0,"c":0.0},"JQ:rrc/cr":{"f":1.0,"c":0.0,"r":0.0},"JQ:rrc/rr":{"f":1.0,"c":0.0},"JK:rrc/cr":{"f":0.0001,"c":0.0,"r":0.9999},"JK:rrc/rr":{"f":1.0,"c":0.0},"QJ:cc/crr":{"f":0.9665,"c":0.0335},"QQ:cc/crr":{"f":0.0,"c":1.0},"QK:cc/crr":{"f":0.0,"c":1.0},"JJ:crc/cr":{"f":0.0,"c":0.0001,"r":0.9999},"JJ:crc/rr":{"f":0.0,"c":1.0},"QJ:crrc/c":{"c":1.0,"r":0.0},"QJ:crrc/r":{"f":0.9801,"c":0.0,"r":0.0199},"QQ:crrc/c":{"c":0.0,"r":1.0},"QQ:crrc/r":{"f":0.0,"c":0.3809,"r":0.6191},"QK:crrc/c":{"c":0.8676,"r":0.1324},"QK:crrc/r":{"f":0.7211,"c":0.2789,"r":0.0},"QJ:rc/crr":{"f":0.9832,"c":0.0168},"QQ:rc/crr":{"f":0.0,"c":1.0},"QK:rc/crr":{"f":1.0,"c":0.0},"JJ:rrc/cr":{"f":0.0011,"c":0.0011,"r":0.9978},"JJ:rrc/rr":{"f":0.0,"c":1.0},"KJ:cc/crr":{"f":0.1768,"c":0.8232},"KQ:cc/crr":{"f":0.1703,"c":0.8297},"KK:cc/crr":{"f":0.002,"c":0.998},"KJ:crrc/c":{"c":0.5034,"r":0.4966},"KJ:crrc/r":{"f":0.1851,"c":0.7646,"r":0.0502},"KQ:crrc/c":{"c":0.3778,"r":0.6222},"KQ:crrc/r":{"f":0.327,"c":0.6048,"r":0.0682},"KK:crrc/c":{"c":0.0,"r":1.0},"KK:crrc/r":{"f":0.0,"c":0.2874,"r":0.7126},"KJ:rc/crr":{"f":0.2865,"c":0.7135},"KQ:rc/crr":{"f":0.6542,"c":0.3458},"KK:rc/crr":{"f":0.0,"c":1.0},"JJ:cc/crr":{"f":0.0,"c":1.0},"QJ:crc/cr":{"f":0.9998,"c":0.0,"r":0.0002},"QJ:crc/rr":{"f":1.0,"c":0.0},"QQ:crc/cr":{"f":0.0,"c":0.0,"r":1.0},"QQ:crc/rr":{"f":0.0,"c":1.0},"QK:crc/cr":{"f":0.4446,"c":0.5554,"r":0.0},"QK:crc/rr":{"f":1.0,"c":0.0},"JJ:crrc/c":{"c":0.0,"r":1.0},"JJ:crrc/r":{"f":0.0,"c":0.0002,"r":0.9998},"JJ:rc/crr":{"f":0.0,"c":1.0},"QJ:rrc/cr":{"f":1.0,"c":0.0,"r":0.0},"QJ:rrc/rr":{"f":0.9833,"c":0.0167},"QQ:rrc/cr":{"f":0.0001,"c":0.0001,"r":0.9998},"QQ:rrc/rr":{"f":0.0,"c":1.0},"QK:rrc/cr":{"f":0.7073,"c":0.2927,"r":0.0},"QK:rrc/rr":{"f":1.0,"c":0.0},"KJ:crc/cr":{"f":0.0,"c":1.0,"r":0.0},"KJ:crc/rr":{"f":0.2297,"c":0.7703},"KQ:crc/cr":{"f":0.452,"c":0.5479,"r":0.0},"KQ:crc/rr":{"f":1.0,"c":0.0},"KK:crc/cr":{"f":0.0,"c":0.0,"r":1.0},"KK:crc/rr":{"f":0.0,"c":1.0},"KJ:rrc/cr":{"f":0.0,"c":1.0,"r":0.0},"KJ:rrc/rr":{"f":0.5554,"c":0.4446},"KQ:rrc/cr":{"f":0.0001,"c":0.9999,"r":0.0},"KQ:rrc/rr":{"f":0.6066,"c":0.3934},"KK:rrc/cr":{"f":0.0,"c":0.0,"r":1.0},"KK:rrc/rr":{"f":0.0,"c":1.0},"JQ:crc/crr":{"f":1.0,"c":0.0},"JK:crc/crr":{"f":1.0,"c":0.0},"JQ:crrc/cr":{"f":0.7979,"c":0.0,"r":0.2021},"JQ:crrc/rr":{"f":0.981,"c":0.019},"JK:crrc/cr":{"f":0.0081,"c":0.0081,"r":0.9837},"JK:crrc/rr":{"f":1.0,"c":0.0},"JQ:rrc/crr":{"f":0.9951,"c":0.0049},"JK:rrc/crr":{"f":1.0,"c":0.0},"QJ:crc/crr":{"f":0.9996,"c":0.0004},"QQ:crc/crr":{"f":0.0,"c":1.0},"QK:crc/crr":{"f":1.0,"c":0.0},"JJ:crrc/cr":{"f":0.0008,"c":0.0008,"r":0.9984},"JJ:crrc/rr":{"f":0.0,"c":1.0},"QJ:rrc/crr":{"f":0.5,"c":0.5},"QQ:rrc/crr":{"f":0.0,"c":1.0},"QK:rrc/crr":{"f":0.9499,"c":0.0501},"KJ:crc/crr":{"f":0.0001,"c":0.9999},"KQ:crc/crr":{"f":0.9456,"c":0.0544},"KK:crc/crr":{"f":0.0,"c":1.0},"KJ:rrc/crr":{"f":0.0677,"c":0.9323},"KQ:rrc/crr":{"f":0.5262,"c":0.4738},"KK:rrc/crr":{"f":0.0,"c":1.0},"JJ:crc/crr":{"f":0.0,"c":1.0},"QJ:crrc/cr":{"f":1.0,"c":0.0,"r":0.0},"QJ:crrc/rr":{"f":1.0,"c":0.0},"QQ:crrc/cr":{"f":0.0,"c":0.0,"r":1.0},"QQ:crrc/rr":{"f":0.0007,"c":0.9993},"QK:crrc/cr":{"f":0.2309,"c":0.7146,"r":0.0545},"QK:crrc/rr":{"f":0.9996,"c":0.0004},"JJ:rrc/crr":{"f":0.0,"c":1.0},"KJ:crrc/cr":{"f":0.0,"c":1.0,"r":0.0},"KJ:crrc/rr":{"f":0.6065,"c":0.3935},"KQ:crrc/cr":{"f":0.3115,"c":0.6834,"r":0.005},"KQ:crrc/rr":{"f":0.4982,"c":0.5018},"KK:crrc/cr":{"f":0.001,"c":0.001,"r":0.9981},"KK:crrc/rr":{"f":0.0,"c":1.0},"JQ:crrc/crr":{"f":1.0,"c":0.0},"JK:crrc/crr":{"f":1.0,"c":0.0},"QJ:crrc/crr":{"f":0.4857,"c":0.5143},"QQ:crrc/crr":{"f":0.0,"c":1.0},"QK:crrc/crr":{"f":0.4537,"c":0.5463},"KJ:crrc/crr":{"f":0.2497,"c":0.7503},"KQ:crrc/crr":{"f":0.6067,"c":0.3933},"KK:crrc/crr":{"f":0.0,"c":1.0},"JJ:crrc/crr":{"f":0.0,"c":1.0}};
+const RANKS = "JQK", SUITS = ["♠", "♥"], BET = [2, 4], MAX_RAISES = 2;
+const NAMES = ["f", "c", "r"];
+const $ = (id) => document.getElementById(id);
+
+let g = null, busy = false;
+let stats = { hands: 0, net: 0 };
+try { const s = JSON.parse(localStorage.getItem("leduc-stats") || "null"); if (s && typeof s.hands === "number") stats = s; } catch (e) {}
+function saveStats() { try { localStorage.setItem("leduc-stats", JSON.stringify(stats)); } catch (e) {} }
+
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+function newHand() {
+  const deck = shuffle([0, 0, 1, 1, 2, 2].map((r, i) => ({ r, s: i % 2 })));
+  const you = stats.hands % 2;
+  g = { you, bot: 1 - you, cards: [deck[0], deck[1]], board: deck[2], showBoard: false,
+        rnd: 0, hist: ["", ""], contrib: [1, 1], raises: 0, toAct: 0, facing: false, over: false, folded: null };
+  $("log").innerHTML = "";
+  log(`hand ${stats.hands + 1}: you are seat ${you + 1}, ${you === 0 ? "acting first" : "acting second"}`);
+  $("next").hidden = true;
+  setStatus("");
+  renderCard($("your-card"), g.cards[you], true);
+  renderBack($("bot-card"));
+  renderEmpty($("board-card"));
+  render();
+  loop();
+}
+
+function legal(st) { return st.facing ? (st.raises < MAX_RAISES ? [0, 1, 2] : [0, 1]) : [1, 2]; }
+function key(st, p) { return RANKS[st.cards[p].r] + (st.showBoard ? RANKS[st.board.r] : "") + ":" + st.hist[0] + "/" + st.hist[1]; }
+function words(st) { return st.facing ? ["Fold", "Call", "Raise"] : ["Fold", "Check", "Bet"]; }
+
+function apply(st, a) {
+  const p = st.toAct, o = 1 - p, actedBefore = st.hist[st.rnd].length > 0;
+  st.hist[st.rnd] += NAMES[a];
+  if (a === 0) { st.folded = p; st.over = true; return; }
+  if (a === 2) { st.contrib[p] = st.contrib[o] + BET[st.rnd]; st.raises++; st.facing = true; st.toAct = o; return; }
+  const roundOver = st.facing || actedBefore;
+  st.contrib[p] = st.contrib[o]; st.facing = false;
+  if (!roundOver) { st.toAct = o; return; }
+  if (st.rnd === 0) { st.rnd = 1; st.raises = 0; st.toAct = 0; st.showBoard = true; }
+  else st.over = true;
+}
+
+function payoff0(st) {
+  if (st.folded === 0) return -st.contrib[0];
+  if (st.folded === 1) return st.contrib[1];
+  const str = (c) => (c.r === st.board.r ? 10 : 0) + c.r;
+  const a = str(st.cards[0]), b = str(st.cards[1]);
+  return a === b ? 0 : (a > b ? st.contrib[0] : -st.contrib[0]);
+}
+
+function describe(st, a) {
+  const p = st.toAct, w = words(st)[a].toLowerCase();
+  if (a === 2) return `${w}s to ${st.contrib[1 - p] + BET[st.rnd]}`;
+  if (a === 1 && st.facing) return `calls ${st.contrib[1 - p] - st.contrib[p]}`;
+  return w + "s";
+}
+
+function sample(probs) { let x = Math.random(), acc = 0; for (const [a, p] of probs) { acc += p; if (x < acc) return a; } return probs[probs.length - 1][0]; }
+
+function loop() {
+  render();
+  if (g.over) return finish();
+  if (g.toAct === g.bot) {
+    busy = true; render();
+    setTimeout(() => {
+      const k = key(g, g.bot), row = STRATEGY[k];
+      const probs = legal(g).map((a) => [a, row[NAMES[a]] || 0]);
+      const a = sample(probs);
+      showReadout(k, probs, a, words(g));
+      log("bot " + describe(g, a));
+      const before = g.rnd;
+      apply(g, a);
+      if (g.rnd !== before) boardDealt();
+      busy = false; loop();
+    }, 650);
+  }
+}
+
+function youAct(a) {
+  if (busy || g.over || g.toAct !== g.you || !legal(g).includes(a)) return;
+  log("you " + describe(g, a), true);
+  const before = g.rnd;
+  apply(g, a);
+  if (g.rnd !== before) boardDealt();
+  loop();
+}
+
+function boardDealt() { renderCard($("board-card"), g.board, true); log(`board: ${RANKS[g.board.r]}`); }
+
+function finish() {
+  const mine = payoff0(g) * (g.you === 0 ? 1 : -1);
+  if (g.folded === null) renderCard($("bot-card"), g.cards[g.bot], true);
+  stats.hands++; stats.net += mine; saveStats();
+  const how = g.folded === g.you ? "You folded" : g.folded === g.bot ? "Bot folded" :
+    `Showdown, bot had ${RANKS[g.cards[g.bot].r]}`;
+  setStatus(mine > 0 ? `${how}. You win ${mine}.` : mine < 0 ? `${how}. You lose ${-mine}.` : `${how}. Split pot.`,
+            mine > 0 ? "win" : mine < 0 ? "lose" : "");
+  log(`result: ${mine > 0 ? "+" : ""}${mine}`);
+  $("next").hidden = false;
+  render();
+  $("next").focus();
+}
+
+function render() {
+  if (!g) return;
+  $("your-seat").textContent = `seat ${g.you + 1}` + (g.you === 0 ? ", acts first" : ", acts second");
+  $("bot-seat").textContent = `seat ${g.bot + 1}` + (g.bot === 0 ? ", acts first" : ", acts second");
+  $("your-put").textContent = g.contrib[g.you];
+  $("bot-put").textContent = g.contrib[g.bot];
+  $("pot").textContent = g.contrib[0] + g.contrib[1];
+  $("round-tag").textContent = g.rnd === 0 ? "Round 1, bets of 2" : "Round 2, bets of 4";
+  const myTurn = !g.over && !busy && g.toAct === g.you;
+  const lg = legal(g), w = words(g);
+  const hintOn = $("hint-toggle").checked;
+  const row = myTurn ? STRATEGY[key(g, g.you)] : null;
+  for (const a of [0, 1, 2]) {
+    const b = $("act-" + a), ok = myTurn && lg.includes(a);
+    b.disabled = !ok;
+    b.querySelector(".name").textContent = w[a];
+    const toCall = g.contrib[g.bot] - g.contrib[g.you];
+    b.querySelector(".cost").textContent = !ok ? "" :
+      a === 0 ? "give up the pot" : a === 1 ? (toCall > 0 ? `put in ${toCall}` : "free") : `put in ${toCall + BET[g.rnd]}`;
+    const show = hintOn && ok && row;
+    b.querySelector(".hint").hidden = !show;
+    b.querySelector(".hint-pct").hidden = !show;
+    if (show) {
+      const p = row[NAMES[a]] || 0;
+      b.querySelector(".hint > i").style.width = (p * 100).toFixed(1) + "%";
+      b.querySelector(".hint-pct").textContent = `equilibrium ${(p * 100).toFixed(0)}%`;
+    }
+  }
+  if (!g.over) setStatus(busy ? "Bot is thinking" : myTurn ? "Your move" : "");
+  $("hands").textContent = stats.hands;
+  const net = $("net"); net.textContent = (stats.net > 0 ? "+" : "") + stats.net;
+  net.className = stats.net > 0 ? "pos" : stats.net < 0 ? "neg" : "";
+  const per = stats.hands ? stats.net / stats.hands : 0;
+  const perEl = $("per"); perEl.textContent = (per > 0 ? "+" : "") + per.toFixed(2);
+  perEl.className = per > 0 ? "pos" : per < 0 ? "neg" : "";
+}
+
+function showReadout(k, probs, picked, w) {
+  $("spot").textContent = `bot's spot  ${k.replace(":", "  history ")}`;
+  $("dist").innerHTML = probs.map(([a, p]) =>
+    `<div class="dist-row${a === picked ? " picked" : ""}"><span>${w[a]}</span><span class="bar"><i style="width:${(p * 100).toFixed(1)}%"></i></span><span class="p">${(p * 100).toFixed(1)}%</span></div>`
+  ).join("");
+}
+
+function setStatus(text, cls) { const s = $("status"); s.textContent = text; s.className = "status" + (cls ? " " + cls : ""); }
+function log(text, you) { const li = document.createElement("li"); li.textContent = text; if (you) li.className = "you"; $("log").appendChild(li); $("log").scrollTop = 1e6; }
+
+function renderCard(el, c, flip) {
+  el.className = "card" + (c.s === 1 ? " red" : "") + (flip ? " flip" : "");
+  el.innerHTML = `<span class="suit">${SUITS[c.s]}</span><span class="rank">${RANKS[c.r]}</span><span class="suit b">${SUITS[c.s]}</span>`;
+  el.setAttribute("aria-label", RANKS[c.r] + (c.s === 1 ? " of hearts" : " of spades"));
+}
+function renderBack(el) { el.className = "card back"; el.innerHTML = ""; el.setAttribute("aria-label", "Bot's card, face down"); }
+function renderEmpty(el) { el.className = "card empty"; el.innerHTML = ""; el.setAttribute("aria-label", "Board card not dealt yet"); }
+
+document.querySelectorAll(".actions button").forEach((b) => b.addEventListener("click", () => youAct(+b.dataset.a)));
+$("next").addEventListener("click", newHand);
+$("hint-toggle").addEventListener("change", render);
+$("reset").addEventListener("click", () => { stats = { hands: 0, net: 0 }; saveStats(); newHand(); });
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  const k = e.key.toLowerCase();
+  if (k === "f") youAct(0); else if (k === "c") youAct(1); else if (k === "r" || k === "b") youAct(2);
+  else if ((k === "enter" || k === " ") && !$("next").hidden && document.activeElement !== $("next")) { e.preventDefault(); newHand(); }
+});
+newHand();
+</script>
+
+</body>
+</html>

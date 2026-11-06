@@ -1,0 +1,372 @@
+<title>Leduc vs CFR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #e9ede8;
+  --surface: #ffffff;
+  --felt: #d9e4dc;
+  --ink: #111a15;
+  --muted: #56635b;
+  --line: #cdd6cf;
+  --accent: #0d6b4c;
+  --accent-ink: #ffffff;
+  --suit-red: #c0303b;
+  --chip: #b7801c;
+  --win: #0d6b4c;
+  --lose: #b3313a;
+  --card-back-a: #0d6b4c;
+  --card-back-b: #12805c;
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1310; --surface: #151d19; --felt: #19251f; --ink: #e6ece8; --muted: #98a59d;
+    --line: #2a3631; --accent: #3dbb88; --accent-ink: #06130d; --suit-red: #f0626b;
+    --chip: #e0ae48; --win: #3dbb88; --lose: #f0626b; --card-back-a: #1d6e52; --card-back-b: #24845f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1310; --surface: #151d19; --felt: #19251f; --ink: #e6ece8; --muted: #98a59d;
+  --line: #2a3631; --accent: #3dbb88; --accent-ink: #06130d; --suit-red: #f0626b;
+  --chip: #e0ae48; --win: #3dbb88; --lose: #f0626b; --card-back-a: #1d6e52; --card-back-b: #24845f;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 24px; }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(2.4rem, 6vw, 3.6rem); line-height: 0.95; margin: 0; letter-spacing: 0.01em; text-transform: uppercase; text-wrap: balance; }
+.sub { color: var(--muted); max-width: 60ch; margin: 6px 0 0; }
+.toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); cursor: pointer; user-select: none; }
+.toggle input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .main { grid-template-columns: minmax(0, 1fr); } }
+
+.table { background: var(--felt); border-radius: 18px; padding: 22px; display: grid; gap: 18px; border: 1px solid var(--line); }
+.seat { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.seat-info { display: grid; gap: 2px; min-width: 0; }
+.seat-name { font-family: var(--display); font-weight: 600; font-size: 1.35rem; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1; }
+.seat-meta { color: var(--muted); font-size: 13px; }
+.put { font-family: var(--mono); font-size: 13px; color: var(--ink); display: inline-flex; align-items: center; gap: 6px; }
+.chip { width: 12px; height: 12px; border-radius: 50%; background: var(--chip); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--chip) 60%, #fff 40%); display: inline-block; }
+
+.middle { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 14px 0; border-block: 1px dashed var(--line); }
+.board { display: flex; align-items: center; gap: 14px; }
+.label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.pot { text-align: right; }
+.pot-num { font-family: var(--display); font-weight: 800; font-size: 2.2rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.round-tag { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+.card { width: 64px; height: 90px; border-radius: 9px; background: var(--surface); border: 1px solid var(--line); display: grid; place-items: center; position: relative; box-shadow: 0 1px 0 var(--line), 0 6px 14px -8px rgba(0,0,0,.35); flex: none; }
+.card .rank { font-family: var(--display); font-weight: 800; font-size: 2.4rem; line-height: 1; }
+.card .suit { position: absolute; top: 6px; left: 8px; font-size: 14px; line-height: 1; }
+.card .suit.b { top: auto; left: auto; bottom: 6px; right: 8px; }
+.card.red { color: var(--suit-red); }
+.card.back { background: repeating-linear-gradient(45deg, var(--card-back-a) 0 6px, var(--card-back-b) 6px 12px); border-color: var(--card-back-a); }
+.card.empty { background: transparent; border: 1.5px dashed var(--line); box-shadow: none; color: var(--muted); }
+.card.empty::after { content: "?"; font-family: var(--display); font-size: 1.6rem; opacity: .5; }
+.card.flip { animation: flip .35s ease-out; }
+@keyframes flip { from { transform: rotateY(90deg); } to { transform: rotateY(0); } }
+
+.status { min-height: 1.5em; font-weight: 500; }
+.status.win { color: var(--win); } .status.lose { color: var(--lose); }
+.actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.actions button, .next { font: 600 15px/1.2 var(--body); padding: 12px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; display: grid; gap: 6px; text-align: left; min-width: 0; }
+.actions button:hover:not(:disabled) { border-color: var(--accent); }
+.actions button:disabled { opacity: .35; cursor: not-allowed; }
+.actions button:focus-visible, .next:focus-visible, .toggle input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions .cost { font: 400 12px var(--mono); color: var(--muted); }
+.hint { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.hint > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .25s; }
+.hint-pct { font: 500 12px var(--mono); color: var(--accent); }
+.next { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); text-align: center; display: block; width: 100%; }
+
+aside { display: grid; gap: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.panel h2 { font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 1.15rem; margin: 0; line-height: 1.1; }
+.spot { font: 500 13px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.dist { display: grid; gap: 8px; }
+.dist-row { display: grid; grid-template-columns: 54px minmax(0, 1fr) 52px; gap: 10px; align-items: center; font-size: 13px; }
+.dist-row .bar { height: 10px; background: color-mix(in srgb, var(--line) 60%, transparent); border-radius: 5px; overflow: hidden; }
+.dist-row .bar > i { display: block; height: 100%; background: var(--muted); border-radius: 5px; }
+.dist-row.picked .bar > i { background: var(--accent); }
+.dist-row.picked span:first-child { font-weight: 600; }
+.dist-row .p { font-family: var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.empty-note { color: var(--muted); font-size: 14px; margin: 0; }
+
+.ledger { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.ledger div { display: grid; gap: 2px; }
+.ledger b { font-family: var(--display); font-weight: 800; font-size: 1.7rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.ledger b.pos { color: var(--win); } .ledger b.neg { color: var(--lose); }
+.ledger-note { font-size: 13px; color: var(--muted); margin: 0; }
+.reset { font: 500 13px var(--body); background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 0; justify-self: start; }
+
+.log { font: 13px/1.6 var(--mono); color: var(--muted); max-height: 200px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.log li.you { color: var(--ink); }
+.rules { color: var(--muted); font-size: 14px; max-width: 75ch; }
+.rules summary { cursor: pointer; color: var(--ink); font-weight: 600; }
+.rules p { margin: 8px 0 0; }
+@media (prefers-reduced-motion: reduce) { .card.flip { animation: none; } .hint > i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Leduc vs CFR</h1>
+      <p class="sub">Heads up Leduc hold'em against a bot trained with CFR+ for 10,000 iterations. A perfect opponent could win at most about 5 millionths of a chip per hand from it.</p>
+    </div>
+    <label class="toggle"><input type="checkbox" id="hint-toggle"> Show the equilibrium play for my spot</label>
+  </header>
+
+  <div class="main">
+    <section class="table" aria-label="Poker table">
+      <div class="seat">
+        <div class="card back" id="bot-card" aria-label="Bot's card, face down"></div>
+        <div class="seat-info">
+          <span class="seat-name">Bot</span>
+          <span class="seat-meta" id="bot-seat">seat</span>
+          <span class="put"><i class="chip"></i><span id="bot-put">1</span> in the pot</span>
+        </div>
+      </div>
+
+      <div class="middle">
+        <div class="board">
+          <div class="card empty" id="board-card" aria-label="Board card"></div>
+          <div><div class="label">Board</div><div class="round-tag" id="round-tag">Round 1, bets of 2</div></div>
+        </div>
+        <div class="pot"><div class="label">Pot</div><div class="pot-num" id="pot">2</div></div>
+      </div>
+
+      <div class="seat">
+        <div class="card" id="your-card" aria-label="Your card"></div>
+        <div class="seat-info">
+          <span class="seat-name">You</span>
+          <span class="seat-meta" id="your-seat">seat</span>
+          <span class="put"><i class="chip"></i><span id="your-put">1</span> in the pot</span>
+        </div>
+      </div>
+
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+      <div class="actions" id="actions">
+        <button id="act-0" data-a="0"><span class="name">Fold</span><span class="cost"></span><span class="hint" hidden><i></i></span><span class="hint-pct" hidden></span></button>
+        <button id="act-1" data-a="1"><span class="name">Check</span><span class="cost"></span><span class="hint" hidden><i></i></span><span class="hint-pct" hidden></span></button>
+        <button id="act-2" data-a="2"><span class="name">Bet</span><span class="cost"></span><span class="hint" hidden><i></i></span><span class="hint-pct" hidden></span></button>
+      </div>
+      <button class="next" id="next" hidden>Deal next hand</button>
+    </section>
+
+    <aside>
+      <div class="panel">
+        <h2>Solver readout</h2>
+        <div class="spot" id="spot">Waiting for the bot's first decision</div>
+        <div class="dist" id="dist"><p class="empty-note">Each time the bot acts you'll see the mix it was choosing from. It mixes its actions deliberately, so the same spot can go different ways.</p></div>
+      </div>
+      <div class="panel">
+        <h2>Session</h2>
+        <div class="ledger">
+          <div><span class="label">Hands</span><b id="hands">0</b></div>
+          <div><span class="label">Net chips</span><b id="net">0</b></div>
+          <div><span class="label">Per hand</span><b id="per">0.00</b></div>
+        </div>
+        <p class="ledger-note" id="ledger-note">Against this bot, perfect play from both sides averages out to 0 per hand once you've played both seats equally. Swings of several chips over a few dozen hands are normal.</p>
+        <button class="reset" id="reset">Reset session</button>
+      </div>
+      <div class="panel">
+        <h2>Hand log</h2>
+        <ul class="log" id="log"></ul>
+      </div>
+    </aside>
+  </div>
+
+  <details class="rules">
+    <summary>Rules of Leduc hold'em</summary>
+    <p>Six cards: two each of J, Q and K. Both players ante 1 and get one private card. In round one bets and raises are 2. Then one board card is dealt and round two bets and raises are 4. Each round allows a bet plus one raise. At showdown, matching the board makes a pair and wins. Otherwise the higher card wins and equal cards split the pot. Seats swap every hand and seat 1 acts first in both rounds.</p>
+  </details>
+</div>
+
+<script>
+const STRATEGY = __STRATEGY__;
+const RANKS = "JQK", SUITS = ["♠", "♥"], BET = [2, 4], MAX_RAISES = 2;
+const NAMES = ["f", "c", "r"];
+const $ = (id) => document.getElementById(id);
+
+let g = null, busy = false;
+let stats = { hands: 0, net: 0 };
+try { const s = JSON.parse(localStorage.getItem("leduc-stats") || "null"); if (s && typeof s.hands === "number") stats = s; } catch (e) {}
+function saveStats() { try { localStorage.setItem("leduc-stats", JSON.stringify(stats)); } catch (e) {} }
+
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+function newHand() {
+  const deck = shuffle([0, 0, 1, 1, 2, 2].map((r, i) => ({ r, s: i % 2 })));
+  const you = stats.hands % 2;
+  g = { you, bot: 1 - you, cards: [deck[0], deck[1]], board: deck[2], showBoard: false,
+        rnd: 0, hist: ["", ""], contrib: [1, 1], raises: 0, toAct: 0, facing: false, over: false, folded: null };
+  $("log").innerHTML = "";
+  log(`hand ${stats.hands + 1}: you are seat ${you + 1}, ${you === 0 ? "acting first" : "acting second"}`);
+  $("next").hidden = true;
+  setStatus("");
+  renderCard($("your-card"), g.cards[you], true);
+  renderBack($("bot-card"));
+  renderEmpty($("board-card"));
+  render();
+  loop();
+}
+
+function legal(st) { return st.facing ? (st.raises < MAX_RAISES ? [0, 1, 2] : [0, 1]) : [1, 2]; }
+function key(st, p) { return RANKS[st.cards[p].r] + (st.showBoard ? RANKS[st.board.r] : "") + ":" + st.hist[0] + "/" + st.hist[1]; }
+function words(st) { return st.facing ? ["Fold", "Call", "Raise"] : ["Fold", "Check", "Bet"]; }
+
+function apply(st, a) {
+  const p = st.toAct, o = 1 - p, actedBefore = st.hist[st.rnd].length > 0;
+  st.hist[st.rnd] += NAMES[a];
+  if (a === 0) { st.folded = p; st.over = true; return; }
+  if (a === 2) { st.contrib[p] = st.contrib[o] + BET[st.rnd]; st.raises++; st.facing = true; st.toAct = o; return; }
+  const roundOver = st.facing || actedBefore;
+  st.contrib[p] = st.contrib[o]; st.facing = false;
+  if (!roundOver) { st.toAct = o; return; }
+  if (st.rnd === 0) { st.rnd = 1; st.raises = 0; st.toAct = 0; st.showBoard = true; }
+  else st.over = true;
+}
+
+function payoff0(st) {
+  if (st.folded === 0) return -st.contrib[0];
+  if (st.folded === 1) return st.contrib[1];
+  const str = (c) => (c.r === st.board.r ? 10 : 0) + c.r;
+  const a = str(st.cards[0]), b = str(st.cards[1]);
+  return a === b ? 0 : (a > b ? st.contrib[0] : -st.contrib[0]);
+}
+
+function describe(st, a) {
+  const p = st.toAct, w = words(st)[a].toLowerCase();
+  if (a === 2) return `${w}s to ${st.contrib[1 - p] + BET[st.rnd]}`;
+  if (a === 1 && st.facing) return `calls ${st.contrib[1 - p] - st.contrib[p]}`;
+  return w + "s";
+}
+
+function sample(probs) { let x = Math.random(), acc = 0; for (const [a, p] of probs) { acc += p; if (x < acc) return a; } return probs[probs.length - 1][0]; }
+
+function loop() {
+  render();
+  if (g.over) return finish();
+  if (g.toAct === g.bot) {
+    busy = true; render();
+    setTimeout(() => {
+      const k = key(g, g.bot), row = STRATEGY[k];
+      const probs = legal(g).map((a) => [a, row[NAMES[a]] || 0]);
+      const a = sample(probs);
+      showReadout(k, probs, a, words(g));
+      log("bot " + describe(g, a));
+      const before = g.rnd;
+      apply(g, a);
+      if (g.rnd !== before) boardDealt();
+      busy = false; loop();
+    }, 650);
+  }
+}
+
+function youAct(a) {
+  if (busy || g.over || g.toAct !== g.you || !legal(g).includes(a)) return;
+  log("you " + describe(g, a), true);
+  const before = g.rnd;
+  apply(g, a);
+  if (g.rnd !== before) boardDealt();
+  loop();
+}
+
+function boardDealt() { renderCard($("board-card"), g.board, true); log(`board: ${RANKS[g.board.r]}`); }
+
+function finish() {
+  const mine = payoff0(g) * (g.you === 0 ? 1 : -1);
+  if (g.folded === null) renderCard($("bot-card"), g.cards[g.bot], true);
+  stats.hands++; stats.net += mine; saveStats();
+  const how = g.folded === g.you ? "You folded" : g.folded === g.bot ? "Bot folded" :
+    `Showdown, bot had ${RANKS[g.cards[g.bot].r]}`;
+  setStatus(mine > 0 ? `${how}. You win ${mine}.` : mine < 0 ? `${how}. You lose ${-mine}.` : `${how}. Split pot.`,
+            mine > 0 ? "win" : mine < 0 ? "lose" : "");
+  log(`result: ${mine > 0 ? "+" : ""}${mine}`);
+  $("next").hidden = false;
+  render();
+  $("next").focus();
+}
+
+function render() {
+  if (!g) return;
+  $("your-seat").textContent = `seat ${g.you + 1}` + (g.you === 0 ? ", acts first" : ", acts second");
+  $("bot-seat").textContent = `seat ${g.bot + 1}` + (g.bot === 0 ? ", acts first" : ", acts second");
+  $("your-put").textContent = g.contrib[g.you];
+  $("bot-put").textContent = g.contrib[g.bot];
+  $("pot").textContent = g.contrib[0] + g.contrib[1];
+  $("round-tag").textContent = g.rnd === 0 ? "Round 1, bets of 2" : "Round 2, bets of 4";
+  const myTurn = !g.over && !busy && g.toAct === g.you;
+  const lg = legal(g), w = words(g);
+  const hintOn = $("hint-toggle").checked;
+  const row = myTurn ? STRATEGY[key(g, g.you)] : null;
+  for (const a of [0, 1, 2]) {
+    const b = $("act-" + a), ok = myTurn && lg.includes(a);
+    b.disabled = !ok;
+    b.querySelector(".name").textContent = w[a];
+    const toCall = g.contrib[g.bot] - g.contrib[g.you];
+    b.querySelector(".cost").textContent = !ok ? "" :
+      a === 0 ? "give up the pot" : a === 1 ? (toCall > 0 ? `put in ${toCall}` : "free") : `put in ${toCall + BET[g.rnd]}`;
+    const show = hintOn && ok && row;
+    b.querySelector(".hint").hidden = !show;
+    b.querySelector(".hint-pct").hidden = !show;
+    if (show) {
+      const p = row[NAMES[a]] || 0;
+      b.querySelector(".hint > i").style.width = (p * 100).toFixed(1) + "%";
+      b.querySelector(".hint-pct").textContent = `equilibrium ${(p * 100).toFixed(0)}%`;
+    }
+  }
+  if (!g.over) setStatus(busy ? "Bot is thinking" : myTurn ? "Your move" : "");
+  $("hands").textContent = stats.hands;
+  const net = $("net"); net.textContent = (stats.net > 0 ? "+" : "") + stats.net;
+  net.className = stats.net > 0 ? "pos" : stats.net < 0 ? "neg" : "";
+  const per = stats.hands ? stats.net / stats.hands : 0;
+  const perEl = $("per"); perEl.textContent = (per > 0 ? "+" : "") + per.toFixed(2);
+  perEl.className = per > 0 ? "pos" : per < 0 ? "neg" : "";
+}
+
+function showReadout(k, probs, picked, w) {
+  $("spot").textContent = `bot's spot  ${k.replace(":", "  history ")}`;
+  $("dist").innerHTML = probs.map(([a, p]) =>
+    `<div class="dist-row${a === picked ? " picked" : ""}"><span>${w[a]}</span><span class="bar"><i style="width:${(p * 100).toFixed(1)}%"></i></span><span class="p">${(p * 100).toFixed(1)}%</span></div>`
+  ).join("");
+}
+
+function setStatus(text, cls) { const s = $("status"); s.textContent = text; s.className = "status" + (cls ? " " + cls : ""); }
+function log(text, you) { const li = document.createElement("li"); li.textContent = text; if (you) li.className = "you"; $("log").appendChild(li); $("log").scrollTop = 1e6; }
+
+function renderCard(el, c, flip) {
+  el.className = "card" + (c.s === 1 ? " red" : "") + (flip ? " flip" : "");
+  el.innerHTML = `<span class="suit">${SUITS[c.s]}</span><span class="rank">${RANKS[c.r]}</span><span class="suit b">${SUITS[c.s]}</span>`;
+  el.setAttribute("aria-label", RANKS[c.r] + (c.s === 1 ? " of hearts" : " of spades"));
+}
+function renderBack(el) { el.className = "card back"; el.innerHTML = ""; el.setAttribute("aria-label", "Bot's card, face down"); }
+function renderEmpty(el) { el.className = "card empty"; el.innerHTML = ""; el.setAttribute("aria-label", "Board card not dealt yet"); }
+
+document.querySelectorAll(".actions button").forEach((b) => b.addEventListener("click", () => youAct(+b.dataset.a)));
+$("next").addEventListener("click", newHand);
+$("hint-toggle").addEventListener("change", render);
+$("reset").addEventListener("click", () => { stats = { hands: 0, net: 0 }; saveStats(); newHand(); });
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  const k = e.key.toLowerCase();
+  if (k === "f") youAct(0); else if (k === "c") youAct(1); else if (k === "r" || k === "b") youAct(2);
+  else if ((k === "enter" || k === " ") && !$("next").hidden && document.activeElement !== $("next")) { e.preventDefault(); newHand(); }
+});
+newHand();
+</script>

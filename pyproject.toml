@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "poker-cfr"
+version = "0.3.0"
+description = "CFR poker bots: exact solvers for Kuhn and Leduc, opponent exploitation and a heads up no-limit hold'em bot with real-time search"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "matplotlib>=3.7", "numba>=0.59"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[tool.setuptools]
+packages = ["poker_cfr", "poker_cfr.holdem"]

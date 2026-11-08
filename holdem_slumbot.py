@@ -3,6 +3,7 @@
     python holdem_slumbot.py --hands 5000
     python holdem_slumbot.py --hands 5000 --resume          # carry on after a stop
     python holdem_slumbot.py --hands 5000 --search --log-dir results/search   # with river search
+    python holdem_slumbot.py --hands 5000 --turn-search --log-dir results/turn   # turn and river search
     python holdem_slumbot.py --hands 5000 --username you --password secret
 
 Run this on your own machine, it needs internet access. Slumbot plays heads up
@@ -202,10 +203,12 @@ def main(argv=None):
     ap.add_argument("--log-dir", default=str(HERE / "results"))
     ap.add_argument("--delay", type=float, default=0.05, help="pause between hands, in seconds")
     ap.add_argument("--search", action="store_true", help="solve river spots in real time (about 1s per river decision)")
+    ap.add_argument("--turn-search", action="store_true", help="solve turn and river spots in real time (about 2s per turn decision)")
     args = ap.parse_args(argv)
 
     from poker_cfr.holdem.agents import CFRAgent
     from poker_cfr.holdem.search import SearchAgent
+    from poker_cfr.holdem.turn_search import TurnSearchAgent
 
     log_dir = Path(args.log_dir)
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -224,7 +227,7 @@ def main(argv=None):
     if not Path(args.bot).exists():
         say(f"can't find the trained bot at {args.bot}")
         return 1
-    bot = (SearchAgent if args.search else CFRAgent).from_file(args.bot)
+    bot = (TurnSearchAgent if args.turn_search else SearchAgent if args.search else CFRAgent).from_file(args.bot)
     client = Client(args.host, args.timeout, max_wait=args.max_wait, log=say)
 
     def login():

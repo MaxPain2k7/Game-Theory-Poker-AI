@@ -1,0 +1,6 @@
+spot 0: pot   500, 4 actions, reference 42s | loss in chips:  reference    3.7  200x4:    5.8 (2s)  200x8:    4.0 (4s)  150x48:    5.5 (16s)
+spot 1: pot   500, 4 actions, reference 77s | loss in chips:  reference    1.1  200x4:    3.7 (3s)  200x8:    4.6 (7s)  150x48:    2.7 (29s)
+spot 2: pot   500, 4 actions, reference 45s | loss in chips:  reference    2.4  200x4:    7.2 (2s)  200x8:    5.4 (4s)  150x48:    4.1 (16s)
+spot 3: pot   500, 4 actions, reference 78s | loss in chips:  reference    2.9  200x4:    5.6 (3s)  200x8:    5.2 (6s)  150x48:    5.2 (29s)
+spot 4: pot   830, 4 actions, reference 42s | loss in chips:  reference    2.2  200x4:    4.1 (2s)  200x8:    3.7 (3s)  150x48:    3.4 (15s)
+spot 5: pot   830, 4 actions, reference 75s | loss in chips:  reference    3.0  200x4:    4.9 (3s)  200x8:    3.7 (6s)  150x48:    3.6 (28s)

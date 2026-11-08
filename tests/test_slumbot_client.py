@@ -73,3 +73,9 @@ def test_search_bot_against_server(tmp_path):
     with MockSlumbot(seed=6) as mock:
         assert run(mock, tmp_path, 25, "--search") == 0
     assert sorted(logged(tmp_path)) == sorted(mock.delivered)
+
+
+def test_turn_search_bot_against_server(tmp_path):
+    with MockSlumbot(seed=7) as mock:
+        assert run(mock, tmp_path, 12, "--turn-search") == 0
+    assert sorted(logged(tmp_path)) == sorted(mock.delivered)

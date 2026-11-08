@@ -220,6 +220,28 @@ This is "unsafe" re-solving as in Pluribus: the ranges assume the opponent playe
 
 Against the blueprint the gain is clear. Against the equity bot it points the same way but the interval still includes zero. River pots against that opponent are bigger and swingier. That run was also stopped after 10,000 of the planned 12,000 hands. The likely reason for the gap is that search helps most where the blueprint's own river play was weakest: off-tree bet sizes and spots where 50 buckets lumped very different hands together. Against the blueprint those spots come up all the time. The equity bot never bluffs, so a better bluff catcher gains less against it.
 
+### Upgrade attempt: turn search
+
+The natural next step after river search is searching on the turn too, which is what Libratus did. On a turn decision the bot solves the rest of the hand: turn betting from the real spot, every river card that can come and river betting after each one. That makes the tree far bigger than the river alone (one river subtree per card), so this solver is compiled with numba:
+
+- **One betting tree, per-card river regrets.** The betting doesn't depend on the cards, so the tree is built once. River decisions keep separate regrets for each river card, since a hand plays a river that made a flush differently from one that paired the board.
+- **Sampled river cards.** Each iteration walks through 4 of the 48 unseen cards, cycling through the deck so every card gets the same number of visits. A combo holding the sampled card is dropped for that card. A pair of hands that don't clash keeps each card with probability 44/48, so river values are scaled by 48/44 to stay unbiased next to the turn fold payoffs. With all 48 cards the values match a brute force calculation exactly.
+- **A coarse river inside the turn solve.** The river part only offers a 3/4 pot bet and all-in to keep the tree small. When the river actually comes, the river search solves it again with the full menu.
+
+200 iterations take about 2 seconds per turn decision. On 6 real turn spots this gives up 2.7 chips per decision on average compared with an exact 400 iteration solve over all 48 river cards, so solver accuracy is not the limit.
+
+Measured the same paired way, turn plus river search against river search alone, both playing the blueprint:
+
+| | result | 95% interval | paired hands |
+|---|---|---|---|
+| turn search minus river search | -8.9 bb/100 | -34.6 to +16.7 | 12,000 |
+
+**No measurable gain.** The four 3,000 hand chunks came out at -44, +8, +7 and -7, which is what a true effect near zero looks like. River search stays the default. Likely reasons:
+
+- **The river search already fixes most of the damage.** River decisions are where a translated bet size or a coarse bucket costs the most. Those are already re-solved. The blueprint's turn play is less broken to begin with.
+- **The turn solve plans for a river the bot doesn't play.** It values each turn line assuming a coarse river (one bet size plus all-in), then plays the real river with four sizes. That gap makes some turn values wrong in a consistent direction.
+- **Unsafe re-solving.** Both turn and river search assume the opponent played like the blueprint and will play an equilibrium from here. Against an opponent that is the blueprint, the second half of that assumption is wrong on every street the bot searches.
+
 ### Against Slumbot
 
 Slumbot is one of the strongest public heads up no-limit bots, trained for far longer on far bigger hardware. `holdem_slumbot.py` plays this bot against it through Slumbot's public API (it needs internet access).
@@ -232,7 +254,7 @@ The blueprint bot without search, over 8,000 hands:
 
 The interval includes zero, so after 8,000 hands this bot can't be told apart from break-even against Slumbot. It can't be said to beat it either: the true result could be a loss of up to about 45 bb/100. Going in, a loss under 100 bb/100 looked like a decent outcome for 90 minutes of training on two cores. Slumbot deals the cards on its server, so duplicate dealing isn't possible here. Narrowing the interval to ±10 would take roughly 90,000 hands. The full hand log is in `results/slumbot_log.csv`.
 
-Run it with `--search` (and a separate `--log-dir`) to measure the searching version too.
+Run it with `--search` or `--turn-search` (and a separate `--log-dir`) to measure the searching versions too.
 
 ### Limitations
 
@@ -270,8 +292,9 @@ python holdem_build_hist.py                               # equity histograms fo
 python holdem_train.py --minutes 90 --abstraction dist    # train the histogram-bucket bot
 python holdem_eval.py --bot models/holdem_bot_dist.npz --vs models/holdem_bot.npz
 python holdem_search_eval.py --opponent blueprint         # what river search adds, about an hour
+python holdem_search_eval.py --mode turn --deals 750 --seed 101   # what turn search adds, one 3,000 hand chunk
 python holdem_slumbot.py --hands 5000 --resume            # play Slumbot, needs internet
-pytest -q                                                 # 59 tests
+pytest -q                                                 # 63 tests
 ```
 
 Pretrained strategies for all four games are in `strategies/`. Leduc-13 reaches 9.5e-05 exploitability after 2,000 CFR+ iterations (20 seconds). Tests run on every push through GitHub Actions.
@@ -299,12 +322,13 @@ poker_cfr/
     agents.py        the CFR bot with action translation, plus baseline opponents
     match.py         duplicate matches and paired comparisons
     search.py        real-time river search: ranges, exact-size subgame, vector CFR+
+    turn_search.py   real-time turn search with sampled river cards, numba
 train.py  evaluate.py  play.py  benchmark.py  benchmark_sampling.py  exploit_demo.py  modeling_demo.py  build_web.py
 holdem_build_pool.py  holdem_build_hist.py  holdem_train.py  holdem_eval.py  holdem_search_eval.py  holdem_play.py  holdem_slumbot.py
 models/holdem_bot.npz        the trained hold'em strategy (equity buckets, default)
 models/holdem_bot_dist.npz   the histogram-bucket version
 docs/                browser game (GitHub Pages ready)
-tests/               59 tests, checked against independent known values
+tests/               63 tests, checked against independent known values
 ```
 
 ## What's next
@@ -312,7 +336,7 @@ tests/               59 tests, checked against independent known values
 - **Run the river search version against Slumbot** and compare it with the blueprint's -11.7 bb/100.
 - **Local Best Response** to put a lower bound on how exploitable the hold'em bot is.
 - **Sharper histogram buckets**: exact river strength per runout and 100+ buckets, then rerun the head to head.
-- **Turn search**: extend real-time search to the turn, which means solving through all 44 river cards with the river solver inside it.
+- **Make turn search pay off**: the same river menu inside the turn solve as in the river search, then safe re-solving so the turn plan and the river play agree.
 - **Safe re-solving**: Libratus' gadget so search can never make the bot more exploitable than the blueprint.
 - **Online adaptation**, updating the opponent model hand by hand during a session instead of in one batch.
 

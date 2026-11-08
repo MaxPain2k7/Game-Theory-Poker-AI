@@ -374,21 +374,27 @@ class SearchAgent(CFRAgent):
     def act(self, state, seat):
         if state.street != 3:
             return super().act(state, seat)
+        return self._search_act(state, seat, self._solve_river)
+
+    def _solve_river(self, spot, board, ranges):
+        game = RiverSubgame(spot, board).solve(ranges, self.iters)
+        return game.root_strategy_all(), game.nodes[0]["actions"]
+
+    def _search_act(self, state, seat, solver):
+        """Solve from the current spot with `solver` and play the result. Falls back to the
+        blueprint when the hand can't be mapped onto the tree or a range comes out empty."""
         start = time.time()
         path = self._path(state)
         if path is None:
-            return super().act(state, seat)
+            return CFRAgent.act(self, state, seat)
         r = self.ranges(state, path)
         me = combo_index(*state.hole[seat])
         if r[seat, me] <= 0 or r[1 - seat].sum() <= 0:
             # the blueprint says this line was impossible for one of us: no sensible range to solve with
-            return super().act(state, seat)
-        spot = Spot(street=3, contrib=tuple(state.contrib), street_in=tuple(state.street_in),
+            return CFRAgent.act(self, state, seat)
+        spot = Spot(street=state.street, contrib=tuple(state.contrib), street_in=tuple(state.street_in),
                     to_act=state.to_act, last_raise=state.last_raise, raises=state.raises, acted=state.acted)
-        game = RiverSubgame(spot, list(state.board))
-        game.solve(r, self.iters)
-        strat = game.root_strategy_all()
-        acts = game.nodes[0]["actions"]
+        strat, acts = solver(spot, list(state.board), r)
         p = strat[:, me]
         k = int(self.rng.choice(len(acts), p=p / p.sum()))
         self.override[len(state.actions)] = strat[k]

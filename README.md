@@ -23,7 +23,7 @@ You can also play the bot in a browser: open `docs/index.html`, or turn on GitHu
 | Showdown-only histories | naive counting thinks a nit folds a J 5% of the time (true 85%), EM recovers 81% |
 | No-limit hold'em bot vs a straightforward equity-based player | +74 bb/100 over 100,000 duplicate hands (95% CI +59 to +89) |
 | Real-time river search vs the plain bot | +45 bb/100 over 12,000 paired hands (95% CI +24 to +66) |
-| No-limit hold'em bot vs Slumbot | -11.7 bb/100 over 8,000 hands (95% CI -44.8 to +21.4) |
+| No-limit hold'em bot vs Slumbot | -1.8 bb/100 over 18,000 hands (95% CI -24.6 to +21.1) |
 | Exploitability lower bound (Local Best Response) | 1,209 mbb/hand over 32,000 hands, Slumbot 2016 measured 4,020 the same way |
 
 ## 1. Solving
@@ -247,13 +247,15 @@ Measured the same paired way, turn plus river search against river search alone,
 
 Slumbot is one of the strongest public heads up no-limit bots, trained for far longer on far bigger hardware. `holdem_slumbot.py` plays this bot against it through Slumbot's public API (it needs internet access).
 
-The blueprint bot without search, over 8,000 hands:
+The blueprint bot without search, in two separate runs:
 
-| hands | result | 95% interval | network retries | hands abandoned | bot left its tree |
-|---|---|---|---|---|---|
-| 8,000 | **-11.7 bb/100** | -44.8 to +21.4 | 17 | 0 | 5 of 21,135 decisions |
+| run | hands | result | 95% interval | network retries | hands abandoned | bot left its tree |
+|---|---|---|---|---|---|---|
+| 1 | 8,000 | -11.7 bb/100 | -44.8 to +21.4 | 17 | 0 | 5 of 21,135 decisions |
+| 2 | 10,000 | +6.1 bb/100 | -25.3 to +37.6 | 30 | 0 | 6 of 26,553 decisions |
+| both | 18,000 | **-1.8 bb/100** | -24.6 to +21.1 | | | |
 
-The interval includes zero, so after 8,000 hands this bot can't be told apart from break-even against Slumbot. It can't be said to beat it either: the true result could be a loss of up to about 45 bb/100. Going in, a loss under 100 bb/100 looked like a decent outcome for 90 minutes of training on two cores. Slumbot deals the cards on its server, so duplicate dealing isn't possible here. Narrowing the interval to ±10 would take roughly 90,000 hands. The full hand log is in `results/slumbot_log.csv`.
+The interval includes zero, so after 18,000 hands this bot can't be told apart from break-even against Slumbot. It can't be said to beat it either: the true result could be a loss of up to about 25 bb/100. Going in, a loss under 100 bb/100 looked like a decent outcome for 90 minutes of training on two cores. The two runs disagree by 18 bb/100, which is well inside the noise. Slumbot deals the cards on its server, so duplicate dealing isn't possible here. Narrowing the interval to ±10 would take roughly 90,000 hands. The hand logs are in `results/slumbot_log.csv` and `results/slumbot_log_2.csv`.
 
 Run it with `--search` or `--turn-search` (and a separate `--log-dir`) to measure the searching versions too.
 
@@ -280,7 +282,7 @@ So the bot is exploitable for at least 1.2 big blinds per hand. For scale:
 | **this bot** | **1,209** |
 | Slumbot 2016 (from the paper) | 4,020 |
 
-Being less exploitable than Slumbot 2016 by this measure doesn't mean the bot is stronger: it lost to today's Slumbot above, and LBR only looks for one kind of leak. Since it never bets before the turn, preflop and flop leaks don't show up here at all. A real best response would win more than 1,209, maybe a lot more. Two other caveats: this measures the blueprint without search, and LBR sees the bot's range through the bot's own buckets, so it can't exploit what the buckets hide.
+Being less exploitable than Slumbot 2016 by this measure doesn't mean the bot is stronger: it only broke even with today's Slumbot above, and LBR only looks for one kind of leak. Since it never bets before the turn, preflop and flop leaks don't show up here at all. A real best response would win more than 1,209, maybe a lot more. Two other caveats: this measures the blueprint without search, and LBR sees the bot's range through the bot's own buckets, so it can't exploit what the buckets hide.
 
 ### Limitations
 
@@ -361,7 +363,7 @@ tests/               68 tests, checked against independent known values
 
 ## What's next
 
-- **Run the river search version against Slumbot** and compare it with the blueprint's -11.7 bb/100.
+- **Run the river search version against Slumbot** and compare it with the blueprint's -1.8 bb/100.
 - **LBR on the searching bot**, to see whether river search lowers the 1,209 mbb/hand found against the blueprint, and an LBR that also bets on the flop.
 - **Sharper histogram buckets**: exact river strength per runout and 100+ buckets, then rerun the head to head.
 - **Make turn search pay off**: the same river menu inside the turn solve as in the river search, then safe re-solving so the turn plan and the river play agree.

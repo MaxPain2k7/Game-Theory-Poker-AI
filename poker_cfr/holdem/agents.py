@@ -164,16 +164,17 @@ class CFRAgent:
         n = int(token[1:])
         return (n - state_before.street_in[opp]) / (state_before.pot + state_before.to_call())
 
-    def _translate(self, node, state_before, token):
+    def _translation_options(self, node, state_before, token):
+        """[(abstract action, probability)] a real action maps to at this node, [] if none fits."""
         t = self.tree
         n_act = t.n_actions[node]
         kinds = t.kind[node, :n_act]
         if token == "f":
             hits = np.nonzero(kinds == FOLD)[0]
-            return int(hits[0]) if len(hits) else None
+            return [(int(hits[0]), 1.0)] if len(hits) else []
         if token in ("k", "c"):
             hits = np.nonzero(kinds == CALL)[0]
-            return int(hits[0]) if len(hits) else None
+            return [(int(hits[0]), 1.0)] if len(hits) else []
         n = int(token[1:])
         allin_idx = np.nonzero(kinds == ALLIN)[0]
         me = state_before.to_act
@@ -182,21 +183,30 @@ class CFRAgent:
         # mapping a big but not all-in bet to all-in would end the abstract hand
         # while the real one carries on, so only near-shoves count as shoves
         if committed >= ALLIN_SHARE and len(allin_idx):
-            return int(allin_idx[0])
+            return [(int(allin_idx[0]), 1.0)]
         cands = [(float(t.frac[node, a]), a) for a in range(n_act) if kinds[a] == RAISE]
         if not cands:
-            return int(allin_idx[0]) if len(allin_idx) else None
+            return [(int(allin_idx[0]), 1.0)] if len(allin_idx) else []
         cands.sort()
         x = self._real_fraction(state_before, token)
         if x <= cands[0][0]:
-            return cands[0][1]
+            return [(cands[0][1], 1.0)]
         if x >= cands[-1][0]:
-            return cands[-1][1]
+            return [(cands[-1][1], 1.0)]
         for (fa, a), (fb, bb) in zip(cands, cands[1:]):
             if fa <= x <= fb:
                 p_a = ((fb - x) * (1 + fa)) / ((fb - fa) * (1 + x))
-                return a if self.rng.random() < p_a else bb
-        return cands[-1][1]
+                return [(a, p_a), (bb, 1.0 - p_a)]
+        return [(cands[-1][1], 1.0)]
+
+    def _translate(self, node, state_before, token):
+        opts = self._translation_options(node, state_before, token)
+        if not opts:
+            return None
+        if len(opts) == 1:
+            return opts[0][0]
+        (a, p_a), (b, _) = opts
+        return a if self.rng.random() < p_a else b
 
     def _node_for(self, state):
         """Walk the abstract tree along the real history. Returns a node or None if off tree."""

@@ -24,6 +24,7 @@ You can also play the bot in a browser: open `docs/index.html`, or turn on GitHu
 | No-limit hold'em bot vs a straightforward equity-based player | +74 bb/100 over 100,000 duplicate hands (95% CI +59 to +89) |
 | Real-time river search vs the plain bot | +45 bb/100 over 12,000 paired hands (95% CI +24 to +66) |
 | No-limit hold'em bot vs Slumbot | -11.7 bb/100 over 8,000 hands (95% CI -44.8 to +21.4) |
+| Exploitability lower bound (Local Best Response) | 1,209 mbb/hand over 32,000 hands, Slumbot 2016 measured 4,020 the same way |
 
 ## 1. Solving
 
@@ -256,9 +257,34 @@ The interval includes zero, so after 8,000 hands this bot can't be told apart fr
 
 Run it with `--search` or `--turn-search` (and a separate `--log-dir`) to measure the searching versions too.
 
+### How exploitable is it? Local Best Response
+
+Winning or losing against one opponent doesn't say how much a perfect opponent could take. In Kuhn and Leduc that number comes from an exact best response, which is impossible in no-limit hold'em. Local Best Response (Lisy and Bowling 2017) gives a lower bound instead. LBR is allowed to see the bot's strategy. It keeps the bot's range, every two card hand weighted by how likely the bot was to play it this way, and at each decision it picks the action with the best value assuming both players just check or call from there:
+
+- calling is worth `wp * (pot + c) - c`, where `wp` is LBR's equity against the range over every runout
+- a raise of `a` is worth `fp * pot + (1 - fp) * (wp' * (pot + c + 2a) - (c + a))`, where `fp` is the chance the bot folds (read from its strategy, including how it would translate the bet) and `wp'` is the equity against only the hands that don't fold
+
+Like the paper's strongest setup, LBR checks or calls preflop and on the flop and bets pot or all-in on the turn and river. My first version bet on every street and used `wp` instead of `wp'` for raises, and it lost to the bot. Fixing those two things against the paper turned it around. As a check, LBR wins +4,915 bb/100 against a bot that always calls, close to the paper's figure of about 50 big blinds per hand.
+
+Against the blueprint bot, 16 blocks of 2,000 duplicate hands (`results/holdem_lbr.md`):
+
+| hands | LBR wins | 95% interval | in mbb/hand |
+|---|---|---|---|
+| 32,000 | **+120.9 bb/100** | +95.5 to +146.2 | 1,209 |
+
+So the bot is exploitable for at least 1.2 big blinds per hand. For scale:
+
+| | exploitability found by LBR (mbb/hand) |
+|---|---|
+| folding every hand | 750 |
+| **this bot** | **1,209** |
+| Slumbot 2016 (from the paper) | 4,020 |
+
+Being less exploitable than Slumbot 2016 by this measure doesn't mean the bot is stronger: it lost to today's Slumbot above, and LBR only looks for one kind of leak. Since it never bets before the turn, preflop and flop leaks don't show up here at all. A real best response would win more than 1,209, maybe a lot more. Two other caveats: this measures the blueprint without search, and LBR sees the bot's range through the bot's own buckets, so it can't exploit what the buckets hide.
+
 ### Limitations
 
-- There is no exploitability number for the hold'em bot. Computing a best response in full no-limit hold'em is out of reach. Methods like Local Best Response (Lisy and Bowling 2017) are the next step for measuring it.
+- The exploitability number above is only a lower bound and only covers turn and river leaks.
 - Equity buckets throw information away. Two hands with the same equity, one a made hand and one a draw, share a bucket. The histogram version above is meant to fix that but didn't measurably help at this size.
 - The abstraction is imperfect recall: on the turn the bot doesn't remember which flop bucket it was in. That saves a lot of memory and is standard practice, but it means CFR's convergence guarantees no longer strictly apply.
 
@@ -294,7 +320,8 @@ python holdem_eval.py --bot models/holdem_bot_dist.npz --vs models/holdem_bot.np
 python holdem_search_eval.py --opponent blueprint         # what river search adds, about an hour
 python holdem_search_eval.py --mode turn --deals 750 --seed 101   # what turn search adds, one 3,000 hand chunk
 python holdem_slumbot.py --hands 5000 --resume            # play Slumbot, needs internet
-pytest -q                                                 # 63 tests
+python holdem_lbr.py --blocks 8 --seed 1                  # Local Best Response, about 13 minutes per block
+pytest -q                                                 # 68 tests
 ```
 
 Pretrained strategies for all four games are in `strategies/`. Leduc-13 reaches 9.5e-05 exploitability after 2,000 CFR+ iterations (20 seconds). Tests run on every push through GitHub Actions.
@@ -323,18 +350,19 @@ poker_cfr/
     match.py         duplicate matches and paired comparisons
     search.py        real-time river search: ranges, exact-size subgame, vector CFR+
     turn_search.py   real-time turn search with sampled river cards, numba
+    lbr.py           Local Best Response, a lower bound on exploitability
 train.py  evaluate.py  play.py  benchmark.py  benchmark_sampling.py  exploit_demo.py  modeling_demo.py  build_web.py
-holdem_build_pool.py  holdem_build_hist.py  holdem_train.py  holdem_eval.py  holdem_search_eval.py  holdem_play.py  holdem_slumbot.py
+holdem_build_pool.py  holdem_build_hist.py  holdem_train.py  holdem_eval.py  holdem_search_eval.py  holdem_play.py  holdem_slumbot.py  holdem_lbr.py
 models/holdem_bot.npz        the trained hold'em strategy (equity buckets, default)
 models/holdem_bot_dist.npz   the histogram-bucket version
 docs/                browser game (GitHub Pages ready)
-tests/               63 tests, checked against independent known values
+tests/               68 tests, checked against independent known values
 ```
 
 ## What's next
 
 - **Run the river search version against Slumbot** and compare it with the blueprint's -11.7 bb/100.
-- **Local Best Response** to put a lower bound on how exploitable the hold'em bot is.
+- **LBR on the searching bot**, to see whether river search lowers the 1,209 mbb/hand found against the blueprint, and an LBR that also bets on the flop.
 - **Sharper histogram buckets**: exact river strength per runout and 100+ buckets, then rerun the head to head.
 - **Make turn search pay off**: the same river menu inside the turn solve as in the river search, then safe re-solving so the turn plan and the river play agree.
 - **Safe re-solving**: Libratus' gadget so search can never make the bot more exploitable than the blueprint.
